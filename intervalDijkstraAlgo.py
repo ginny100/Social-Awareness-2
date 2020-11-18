@@ -1,27 +1,9 @@
 # Python implementation of Dijkstra's algorithm
 #https://gist.github.com/econchick/4666413
 
-import collections
-from numpy import sum
-
-class Graph:
-    def __init__(self):
-        self.nodes = set()
-        self.edges = collections.defaultdict(list)
-        self.distances = {}
-
-    def add_node(self, value):
-        self.nodes.add(value)
-
-    def add_edge(self, from_node, to_node, distance):
-        self.edges[from_node].append(to_node)
-        self.edges[to_node].append(from_node)
-        self.distances[(from_node, to_node)] = distance
-
-def sum_lists(a, b):
-    return list(map(sum, zip(a, b)))
+import networkx as nx
                                        
-def dijkstra(graph, initial):
+'''def dijkstra(graph, initial):
     visited = {initial: [0,0]}
     path = {}
   
@@ -66,10 +48,10 @@ def dijkstra(graph, initial):
                 visited[edge] = weight
                 path[edge] = min_node
 
-    return visited, path
+    return visited, path'''
 
 def main():
-    graph = Graph()
+    graph = nx.Graph()
     ''' Picture of Graph
                B
             / /\ \
@@ -79,20 +61,21 @@ def main():
           \ \/ /
             D
     '''
-    graph.nodes = {'A','B','C','D','E','F'}
-    graph.edges = {'A': ['B', 'C', 'D'], 'B':['A', 'C', 'E', 'F'], \
-                'C':['A', 'B', 'D', 'E'], 'D':['A', 'C', 'E', 'F'],\
-                'E': ['B', 'C', 'D', 'F'],\
-                    'F': ['B', 'E', 'D']}
-    graph.distance = {('A', 'B'):[6,8], ('A', 'C'):[2,4], ('A', 'D'):[7,9], \
-                      ('B', 'C'):[2,4], ('B', 'E'):[3,5], ('B', 'F'):[9,11], \
-                      ('C', 'E'):[1,3], ('C', 'D'):[5,7], \
-                      ('E', 'D'):[4,6], ('E', 'F'):[3,5], \
-                      ('F', 'D'):[8,10]}
-
-    v, path = dijkstra(graph, 'A')
-    print('Visited: ', v)
-    print('Path :', path)
+    
+    graph.add_edge('A', 'B', weight=[6,8])
+    graph.add_edge('A', 'C', weight=[2,4])
+    graph.add_edge('A', 'D', weight=[7,9])
+    graph.add_edge('B', 'C', weight=[2,4])
+    graph.add_edge('B', 'E', weight=[3,5])
+    graph.add_edge('B', 'F', weight=[9,11])
+    graph.add_edge('C', 'E', weight=[1,3])
+    graph.add_edge('C', 'D', weight=[5,7])
+    graph.add_edge('E', 'D', weight=[4,6])
+    graph.add_edge('E', 'F', weight=[3,5])
+    graph.add_edge('F', 'D', weight=[8,10])
+    
+    for node1, node2, data in graph.edges(data=True):
+        print(data['weight'])
 
 if __name__ == "__main__":
     main()
