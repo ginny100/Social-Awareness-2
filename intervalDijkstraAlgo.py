@@ -20,6 +20,7 @@ from itertools import count
 def fuzzy_check(l1, l2):
     # Given two lists checks the fuzzy membership and
     # returns a number
+    
     l1_r = ((l1[1] - l1[0])/2)
     l2_r = ((l2[1] - l2[0])/2)
     
@@ -28,98 +29,55 @@ def fuzzy_check(l1, l2):
     elif l1[0] <= l2[0] <= l1[1] < l2[1] and l1_r > 0: 
         fuzzy = -1
     elif l2[0] <= l1[0] < l1[1] <= l2[1] and l2_r > l1_r:
-        fuzzy = (l2[1] - l1[1])/(2(l2_r - l1_r))
+        fuzzy = (l2[1] - l1[1])/(2*(l2_r - l1_r))
     elif l2_r == l1_r and l1[1] == l2[1]:
         fuzzy = 0.5
     else:
-        fuzzy = 2
+        fuzzy = 0
 
     return fuzzy
 
-def dijkstra(G, sources, weight="weight"):
+def drastic_sum(fu_1, fu_2):
     
-    G_succ = G._succ if G.is_directed() else G._adj
+    if fu_2 == 0:
+        result = fu_1
+    elif fu_1 == 0:
+        result = fu_2
+    else:
+        result = 1
     
-    push = heappush
-    pop = heappop
-    dist = {}  # dictionary of final distances
-    seen = {}
-    fuzzy = 0
-    # fringe is heapq with 3-tuples (distance,c,node)
-    # use the count c to avoid comparing nodes (may not be able to)
-    c = count()
-    fringe = []
-    for source in sources:
-        if source not in G:
-            raise nx.NodeNotFound(f"Source {source} not in G")
-        seen[source] = [0,0]
-        push(fringe, ([0,0], next(c), source))
-        
-    while fringe:
-        (d, _, v) = pop(fringe)
-        if v in dist:
-            continue  # already searched this node.
-        dist[v] = d
-        for u, e in G_succ[v].items():
-            w = e.get('weight')
-            prev_weight = dist[v]
-            fuzzy = fuzzy_check(d, w)
+    return result
 
-            vu_dist = [prev_weight[i] + w[i] for i in range(len(prev_weight))]
-
-            if u not in seen or fuzzy == 0:
-                seen[u] = vu_dist
-                push(fringe, (vu_dist, next(c), u))
-    # The optional predecessor and path dictionaries can be accessed
-    # by the caller via the pred and paths objects passed as arguments.
-    return dist
-                                       
-'''def dijkstra(graph, initial):
+def dijkstra(graph, initial):
     visited = {initial: [0,0]}
     path = {}
-  
+
     nodes = set(graph.nodes)
-  
+
     while nodes: 
         min_node = None
         for node in nodes:
             if node in visited:
                 if min_node is None:
                     min_node = node
-                elif visited[node] < visited[min_node]:
-                    min_node = node
+                else:
+                    fuzzy = fuzzy_check(visited[node], visited[min_node])
+                    if fuzzy != 0: # Need to check member here and test them against the min node
+                        min_node = node
 
         if min_node is None:
             break
 
         nodes.remove(min_node)
-        l1 = visited[min_node]
-        cw_radius = ((l1[1] - l1[0])/2)
+        current_list = visited[min_node]
 
-        for edge in graph.edges[min_node]:
-            # Need to find Fuzzy Membership Here somehow (Use def 3?)
-            # D[z] is visited[edge]
-            # weight is D[u] + w(u,z)
-            # Fuzzy Path Membership Test
-            l2 = graph.distance[(min_node, edge)]
-            l2_radius = ((l2[1] - l2[0])/2)
-            if l1[1] < l2[0]:
-                fuzzy = 1
-            elif l1[0] <= l2[0] <= l1[1] < l2[1] and cw_radius > 0: 
-                fuzzy = -1
-            elif l2[0] <= l1[0] < l1[1] <= l2[1] and l2_radius > cw_radius:
-                fuzzy = (l2[1] - l1[1])/(2(l2_radius - cw_radius))
-            elif l2_radius == cw_radius and l1[1] == l2[1]:
-                fuzzy = 0.5
-            else:
-                print("error")
-                
-            weight = sum_lists(l1, graph.distance[(min_node, edge)])
-            if edge not in visited or weight < visited[edge]:
-                visited[edge] = weight
-                path[edge] = min_node
+        for u, v in graph.edges(min_node):
+            fuzzy = fuzzy_check(current_list, graph.edges[u,v]['weight'])
+            if v not in visited or fuzzy != 0:
+                visited[v] = graph.edges[u,v]['weight']
+                path[v] = min_node    
 
-    return visited, path'''
+    return visited, path
 
 def main():
     graph = nx.Graph()
@@ -133,22 +91,20 @@ def main():
             D
     '''
     
-    graph.add_edge('A', 'B', weight=[6,8])
-    graph.add_edge('A', 'C', weight=[2,4])
-    graph.add_edge('A', 'D', weight=[7,9])
-    graph.add_edge('B', 'C', weight=[2,4])
+    graph.add_edge('A', 'B', weight=[2,8])
+    graph.add_edge('A', 'C', weight=[3,4])
+    graph.add_edge('A', 'D', weight=[3,5])
+    graph.add_edge('B', 'C', weight=[1,4])
     graph.add_edge('B', 'E', weight=[3,5])
     graph.add_edge('B', 'F', weight=[9,11])
-    graph.add_edge('C', 'E', weight=[1,3])
+    graph.add_edge('C', 'E', weight=[4,6])
     graph.add_edge('C', 'D', weight=[5,7])
     graph.add_edge('E', 'D', weight=[4,6])
-    graph.add_edge('E', 'F', weight=[3,5])
+    graph.add_edge('E', 'F', weight=[2,4])
     graph.add_edge('F', 'D', weight=[8,10])
     
-    for node1, node2, data in graph.edges(data=True):
-        print(node1, node2)
-    
-    dict1 = dijkstra(graph, 'A')
+    v, path = dijkstra(graph, 'A')
+    print('Path :', path)
 
 if __name__ == "__main__":
     main()
